@@ -1,6 +1,8 @@
 """
 Tests for models
 """
+from decimal import Decimal
+from core import models
 
 from django.test import TestCase
 from django.contrib.auth import get_user_model
@@ -44,8 +46,24 @@ class ModelTests(TestCase):
     """Test creating a new superuser"""
     user = get_user_model().objects.create_superuser(
       'testSuper@example.com',
-      'test123'
+      'testuser12345'
     )
 
     self.assertTrue(user.is_superuser)
     self.assertTrue(user.is_staff)
+
+  def test_create_smartphone(self):
+    """Test creating a smartphone is successful"""
+    user = get_user_model().objects.create_user(
+      'test@example.com',
+      'testuser1234'
+    )
+
+    smartphone = models.Smartphone.objects.create(
+      user = user,
+      name = 'Smartphone 1',
+      price = Decimal('9.5'),
+      stock = 10
+    )
+
+    self.assertEqual(str(smartphone), smartphone.name)
