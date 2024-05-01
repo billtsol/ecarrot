@@ -1,0 +1,4 @@
+"""
+Serializers for smartphone APIs
+"""
+

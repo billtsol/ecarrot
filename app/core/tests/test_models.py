@@ -62,8 +62,7 @@ class ModelTests(TestCase):
     smartphone = models.Smartphone.objects.create(
       user = user,
       name = 'Smartphone 1',
-      price = Decimal('9.5'),
-      stock = 10
+      price = Decimal('9.5')
     )
 
     self.assertEqual(str(smartphone), smartphone.name)
