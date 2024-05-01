@@ -41,6 +41,7 @@ INSTALLED_APPS = [
 
     'core',
     'user',
+    'smartphone',
 
     'rest_framework',
     'rest_framework.authtoken',
