@@ -13,7 +13,7 @@ from rest_framework.test import APIClient # type: ignore
 from core.models import Smartphone
 from smartphone.serializers import SmartphoneSerializer
 
-SMARTPHONE_URLS = reverse('smartphone:smartphone-list')
+SMARTPHONE_URLS = reverse('smartphones:smartphone-list')
 
 def create_smartphone(user, **params):
   """Create and return a sample smartphone"""
