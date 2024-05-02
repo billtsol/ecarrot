@@ -11,9 +11,17 @@ from rest_framework import status # type: ignore
 from rest_framework.test import APIClient # type: ignore
 
 from core.models import Smartphone
-from smartphone.serializers import SmartphoneSerializer
+
+from smartphone.serializers import (
+  SmartphoneSerializer,
+  SmartphoneDetailSerializer
+)
 
 SMARTPHONE_URLS = reverse('smartphones:smartphone-list')
+
+def detail_url(smartphone_id):
+  """Create and return smartphone detail URL."""
+  return reverse('smartphones:smartphone-detail', args=[smartphone_id])
 
 def create_smartphone(user, **params):
   """Create and return a sample smartphone"""
@@ -78,4 +86,17 @@ class PrivateSmartphoneApiTests(TestCase):
     serializer = SmartphoneSerializer(smartphone, many=True)
 
     self.assertEqual(res.status_code, status.HTTP_200_OK)
+    self.assertEqual(res.data, serializer.data)
+
+
+  def test_get_smartphone_detail(self):
+    """Test get smartphone detail"""
+    
+    smartphone = create_smartphone(user=self.user)
+
+    url = detail_url(smartphone.id)
+    res = self.client.get(url)
+
+    serializer = SmartphoneDetailSerializer(smartphone)
+
     self.assertEqual(res.data, serializer.data)

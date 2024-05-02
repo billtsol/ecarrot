@@ -12,3 +12,9 @@ class SmartphoneSerializer(serializers.ModelSerializer):
         model = Smartphone
         fields = ('id', 'name', 'price',)
         read_only_fields = ('id',)
+
+class SmartphoneDetailSerializer(SmartphoneSerializer):
+    """Serializer for smartphone detail view."""
+
+    class Meta(SmartphoneSerializer.Meta):
+        feilds = SmartphoneSerializer.Meta.fields + ('description',)
