@@ -33,6 +33,9 @@ def create_smartphone(user, **params):
 
   return Smartphone.objects.create(user=user, **defaults)
 
+def create_user(**params):
+  """Create and return a sample user"""
+  return get_user_model().objects.create_user(**params)
 
 class PublicSmartphoneApiTests(TestCase):
   """Test the publicly available smartphone API for unauthenticated users"""
@@ -51,10 +54,10 @@ class PrivateSmartphoneApiTests(TestCase):
 
   def setUp(self):
     self.client = APIClient()
-    self.user = get_user_model().objects.create_user(
-      'userTeset12@example.com',
-      'test123456'
-    )
+    self.user = create_user(
+      email = 'userTeset12@example.com',
+      password = 'test123456'
+      )
     self.client.force_authenticate(self.user)
 
   def test_retrieve_smartphones(self):
@@ -72,9 +75,9 @@ class PrivateSmartphoneApiTests(TestCase):
 
   def test_smartphone_list_limited_to_user(self):
     """Test that smartphones for the authenticated user are returned"""
-    other_user = get_user_model().objects.create_user(
-      'testUser2@example.com',
-      'test123456'
+    other_user = create_user(
+      email = 'testUser2@example.com',
+      password = 'test123456'
     )
     create_smartphone(user=other_user)
 
@@ -91,7 +94,7 @@ class PrivateSmartphoneApiTests(TestCase):
 
   def test_get_smartphone_detail(self):
     """Test get smartphone detail"""
-    
+
     smartphone = create_smartphone(user=self.user)
 
     url = detail_url(smartphone.id)
@@ -100,3 +103,117 @@ class PrivateSmartphoneApiTests(TestCase):
     serializer = SmartphoneDetailSerializer(smartphone)
 
     self.assertEqual(res.data, serializer.data)
+
+  def test_create_smartphone(self):
+    """Test creating a new smartphone"""
+    payload = {
+      'name': 'Test Smartphone',
+      'price': Decimal('100.00')
+    }
+
+    res = self.client.post(SMARTPHONE_URLS, payload)
+
+    self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+
+    smartphone = Smartphone.objects.get(id=res.data['id'])
+
+    for key, value in payload.items():
+      self.assertEqual(getattr(smartphone, key), value)
+
+    self.assertEqual(smartphone.user, self.user)
+
+  def test_partial_update(self):
+    """Test partial update of a smartphone"""
+    original_price = Decimal('100.00')
+
+    smartphone = create_smartphone(
+      user = self.user,
+      name = "Iphone 1 test",
+      price = original_price
+    )
+
+    payload = {
+      'name': 'Iphone 1'
+    }
+
+    url = detail_url(smartphone.id)
+    res = self.client.patch(url, payload)
+
+    self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+    smartphone.refresh_from_db()
+
+    self.assertEqual(smartphone.name, payload['name'])
+    self.assertEqual(smartphone.price, original_price)
+    self.assertEqual(smartphone.user, self.user)
+
+  def test_full_update(self):
+    """Test full update of a smartphone"""
+
+    smartphone = create_smartphone(
+      user = self.user,
+      name = "Iphone 1 test",
+      price = Decimal('100.00')
+    )
+
+    payload = {
+      'name': 'Iphone 2',
+      'price': Decimal('200.00')
+    }
+
+    url = detail_url(smartphone.id)
+    res = self.client.put(url, payload)
+
+    self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+    smartphone.refresh_from_db()
+
+    for key, value in payload.items():
+      self.assertEqual(getattr(smartphone, key), value)
+
+    self.assertEqual(smartphone.user, self.user)
+
+  def test_update_user_returns_error(self):
+    """Test that update user returns error"""
+
+    new_user = create_user(
+      email = 'user1@example.com',
+      password = 'test123456'
+    )
+
+    smartphone = create_smartphone(user=self.user)
+
+    payload = {'user': new_user.id}
+    url = detail_url(smartphone.id)
+    self.client.patch(url, payload)
+
+    smartphone.refresh_from_db()
+    self.assertEqual(smartphone.user, self.user)
+
+  def test_delete_smartphone(self):
+    """Test delete a smartphone"""
+
+    smartphone = create_smartphone(user=self.user)
+
+    url = detail_url(smartphone.id)
+    res = self.client.delete(url)
+
+    self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+
+    self.assertFalse(Smartphone.objects.filter(id=smartphone.id).exists())
+
+  def test_delete_smartphone_other_users_smartphone_error(self):
+    """Test that authenticated user cannot delete other user's smartphone"""
+
+    new_user = create_user(
+      email = 'user98@example.com',
+      password = 'test123456'
+    )
+
+    smartphone = create_smartphone(user=new_user)
+
+    url = detail_url(smartphone.id)
+    res = self.client.delete(url)
+
+    self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+    self.assertTrue(Smartphone.objects.filter(id=smartphone.id).exists())

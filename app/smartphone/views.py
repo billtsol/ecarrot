@@ -28,3 +28,7 @@ class SmartphoneViewSet(viewsets.ModelViewSet):
       return serializers.SmartphoneSerializer
 
     return self.serializer_class
+
+  def perform_create(self, serializer):
+    """Create a new smartphone"""
+    serializer.save(user=self.request.user)
