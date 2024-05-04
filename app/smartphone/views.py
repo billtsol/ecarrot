@@ -39,7 +39,11 @@ class SmartphoneViewSet(viewsets.ModelViewSet):
     """Create a new smartphone"""
     serializer.save(user=self.request.user)
 
-class TagViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+class TagViewSet(
+  mixins.UpdateModelMixin,
+  mixins.ListModelMixin,
+  viewsets.GenericViewSet
+):
   """Manage tags in the database"""
 
   serializer_class = serializers.TagSerializer
