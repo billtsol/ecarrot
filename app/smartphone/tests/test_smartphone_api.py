@@ -10,7 +10,10 @@ from django.urls import reverse
 from rest_framework import status # type: ignore
 from rest_framework.test import APIClient # type: ignore
 
-from core.models import Smartphone
+from core.models import (
+  Smartphone,
+  Tag
+)
 
 from smartphone.serializers import (
   SmartphoneSerializer,
@@ -108,7 +111,7 @@ class PrivateSmartphoneApiTests(TestCase):
     """Test creating a new smartphone"""
     payload = {
       'name': 'Test Smartphone',
-      'price': Decimal('100.00')
+      'price': Decimal('100.00'),
     }
 
     res = self.client.post(SMARTPHONE_URLS, payload)
@@ -217,3 +220,66 @@ class PrivateSmartphoneApiTests(TestCase):
 
     self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
     self.assertTrue(Smartphone.objects.filter(id=smartphone.id).exists())
+
+  def test_create_smartphone_with_new_tags(self):
+    """Test creating a new smartphone with new tags"""
+
+    payload = {
+      'name': 'Test Smartphone2',
+      'price': Decimal('100.00'),
+      'tags': [
+        {'name' : 'tag12'},
+        { 'name' : 'tag22'}
+      ]
+    }
+
+    res = self.client.post(SMARTPHONE_URLS, payload, format='json')
+
+    self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+
+    smartphones = Smartphone.objects.filter(user = self.user)
+    self.assertEqual(smartphones.count(), 1)
+
+    smartphone = smartphones[0]
+    self.assertEqual(smartphone.tags.count(), 2)
+
+    for tag in payload['tags']:
+      exists = smartphone.tags.filter(
+        name = tag['name'],
+        user = self.user
+      ).exists()
+      self.assertTrue(exists)
+
+  # def test_create_smartphone_with_existing_tags(self):
+    # """Test creating a new smartphone with existing tags"""
+
+    # tag1 = Tag.objects.create(user=self.user, name='tag1')
+    # tag2 = Tag.objects.create(user=self.user, name='tag2')
+
+    # payload = {
+    #   'name': 'Test Smartphone',
+    #   'price': Decimal('100.00'),
+    #   'tags': [
+    #     {'name' : 'tag1'},
+    #     {'name' : 'tag3'}
+    #   ]
+    # }
+
+    # res = self.client.post(SMARTPHONE_URLS, payload, format='json')
+
+    # self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+
+    # smartphones = Smartphone.objects.filter(user = self.user)
+    # self.assertEqual(smartphones.count(), 1)
+
+    # smartphone = smartphones[0]
+    # self.assertEqual(smartphone.tags.count(), 2)
+
+    # self.assertIn(tag1, smartphone.tags.all())
+
+    # for tag in payload['tags']:
+    #   exists = smartphone.tags.filter(
+    #     name = tag['name'],
+    #     user = self.user
+    #   ).exists()
+    #   self.assertTrue(exists)
