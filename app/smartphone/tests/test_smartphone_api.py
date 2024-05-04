@@ -352,21 +352,21 @@ class ImageUploadTests(TestCase):
   def tearDown(self):
     self.smartphone.image.delete()
 
-  # def test_upload_image(self):
-  #   """Test uploading an image to a smartphone"""
-  #   url = image_upload_url(self.smartphone.id)
+  def test_upload_image(self):
+    """Test uploading an image to a smartphone"""
+    url = image_upload_url(self.smartphone.id)
 
-  #   with tempfile.NamedTemporaryFile(suffix='.jpg') as image_file:
-  #     img = Image.new('RGB', (10, 10))
-  #     img.save(image_file, format='JPEG')
-  #     image_file.seek(0)
-  #     payload = {'image': image_file}
-  #     res = self.client.post(url, payload, format='multipart')
+    with tempfile.NamedTemporaryFile(suffix='.jpg') as image_file:
+      img = Image.new('RGB', (10, 10))
+      img.save(image_file, format='JPEG')
+      image_file.seek(0)
+      payload = {'image': image_file}
+      res = self.client.post(url, payload, format='multipart')
 
-  #   self.smartphone.refresh_from_db()
-  #   self.assertEqual(res.status_code, status.HTTP_200_OK)
-  #   self.assertIn('image', res.data)
-  #   self.assertTrue(os.path.exists(self.smartphone.image.path))
+    self.smartphone.refresh_from_db()
+    self.assertEqual(res.status_code, status.HTTP_200_OK)
+    self.assertIn('image', res.data)
+    self.assertTrue(os.path.exists(self.smartphone.image.path))
 
   def test_upload_image_bad_request(self):
     """Test uploading an invalid image"""
