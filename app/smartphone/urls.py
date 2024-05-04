@@ -11,9 +11,10 @@ from rest_framework.routers import DefaultRouter # type: ignore
 from smartphone import views
 
 router = DefaultRouter()
-router.register('smartphones', views.SmartphoneViewSet)
+router.register('smartphone', views.SmartphoneViewSet)
+router.register('tags', views.TagViewSet)
 
-app_name = 'smartphones'
+app_name = 'smartphone'
 
 urlpatterns = [
     path('', include(router.urls))

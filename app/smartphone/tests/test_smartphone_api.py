@@ -17,11 +17,11 @@ from smartphone.serializers import (
   SmartphoneDetailSerializer
 )
 
-SMARTPHONE_URLS = reverse('smartphones:smartphone-list')
+SMARTPHONE_URLS = reverse('smartphone:smartphone-list')
 
 def detail_url(smartphone_id):
   """Create and return smartphone detail URL."""
-  return reverse('smartphones:smartphone-detail', args=[smartphone_id])
+  return reverse('smartphone:smartphone-detail', args=[smartphone_id])
 
 def create_smartphone(user, **params):
   """Create and return a sample smartphone"""

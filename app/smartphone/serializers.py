@@ -3,7 +3,10 @@ Serializers for smartphone APIs
 """
 
 from rest_framework import serializers # type: ignore
-from core.models import Smartphone
+from core.models import (
+    Smartphone,
+    Tag
+)
 
 class SmartphoneSerializer(serializers.ModelSerializer):
     """Serializer for smartphone objects"""
@@ -18,3 +21,11 @@ class SmartphoneDetailSerializer(SmartphoneSerializer):
 
     class Meta(SmartphoneSerializer.Meta):
         feilds = SmartphoneSerializer.Meta.fields + ('description',)
+
+class TagSerializer(serializers.ModelSerializer):
+    """Serializer for tag objects"""
+
+    class Meta:
+        model = Tag
+        fields = ('id', 'name',)
+        read_only_fields = ('id',)
