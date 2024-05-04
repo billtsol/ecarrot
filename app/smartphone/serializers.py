@@ -25,11 +25,8 @@ class SmartphoneSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'price','tags',)
         read_only_fields = ('id',)
 
-    def create(self, validated_data):
-        """Create and return a new smartphone"""
-        tags = validated_data.pop('tags', [])
-
-        smartphone = Smartphone.objects.create(**validated_data)
+    def _get_or_create_tags(self, tags, instance):
+        """Handle getting or creating tags as needed"""
         auth_user = self.context['request'].user
 
         for tag in tags:
@@ -37,9 +34,30 @@ class SmartphoneSerializer(serializers.ModelSerializer):
                 user = auth_user,
                 **tag,
             )
-            smartphone.tags.add(tag_obj)
+            instance.tags.add(tag_obj)
+
+    def create(self, validated_data):
+        """Create and return a new smartphone"""
+        tags = validated_data.pop('tags', [])
+        smartphone = Smartphone.objects.create(**validated_data)
+
+        self._get_or_create_tags(tags, smartphone)
 
         return smartphone
+
+    def update(self, instance, validated_data):
+        """Update and return a smartphone"""
+        tags = validated_data.pop('tags', None)
+
+        if tags is not None:
+            instance.tags.clear()
+            self._get_or_create_tags(tags, instance)
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        instance.save()
+        return instance
 
 class SmartphoneDetailSerializer(SmartphoneSerializer):
     """Serializer for smartphone detail view."""

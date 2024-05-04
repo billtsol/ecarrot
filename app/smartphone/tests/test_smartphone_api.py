@@ -250,36 +250,80 @@ class PrivateSmartphoneApiTests(TestCase):
       ).exists()
       self.assertTrue(exists)
 
-  # def test_create_smartphone_with_existing_tags(self):
-    # """Test creating a new smartphone with existing tags"""
+  def test_create_smartphone_with_existing_tags(self):
+    """Test creating a new smartphone with existing tags"""
 
-    # tag1 = Tag.objects.create(user=self.user, name='tag1')
-    # tag2 = Tag.objects.create(user=self.user, name='tag2')
+    tag1 = Tag.objects.create(user=self.user, name='tag1')
+    tag2 = Tag.objects.create(user=self.user, name='tag2')
 
-    # payload = {
-    #   'name': 'Test Smartphone',
-    #   'price': Decimal('100.00'),
-    #   'tags': [
-    #     {'name' : 'tag1'},
-    #     {'name' : 'tag3'}
-    #   ]
-    # }
+    payload = {
+      'name': 'Test Smartphone',
+      'price': Decimal('100.00'),
+      'tags': [
+        {'name' : 'tag1'},
+        {'name' : 'tag3'}
+      ]
+    }
 
-    # res = self.client.post(SMARTPHONE_URLS, payload, format='json')
+    res = self.client.post(SMARTPHONE_URLS, payload, format='json')
 
-    # self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+    self.assertEqual(res.status_code, status.HTTP_201_CREATED)
 
-    # smartphones = Smartphone.objects.filter(user = self.user)
-    # self.assertEqual(smartphones.count(), 1)
+    smartphones = Smartphone.objects.filter(user = self.user)
+    self.assertEqual(smartphones.count(), 1)
 
-    # smartphone = smartphones[0]
-    # self.assertEqual(smartphone.tags.count(), 2)
+    smartphone = smartphones[0]
+    self.assertEqual(smartphone.tags.count(), 2)
 
-    # self.assertIn(tag1, smartphone.tags.all())
+    self.assertIn(tag1, smartphone.tags.all())
 
-    # for tag in payload['tags']:
-    #   exists = smartphone.tags.filter(
-    #     name = tag['name'],
-    #     user = self.user
-    #   ).exists()
-    #   self.assertTrue(exists)
+    for tag in payload['tags']:
+      exists = smartphone.tags.filter(
+        name = tag['name'],
+        user = self.user
+      ).exists()
+      self.assertTrue(exists)
+
+  def test_create_tag_on_update(self):
+    """Test create tag when updating a smartphone"""
+    smartphone = create_smartphone(user=self.user)
+
+    payload = {
+      'tags': [
+        {'name': 'tag0'}
+      ]
+    }
+    url = detail_url(smartphone.id)
+    res = self.client.patch(url, payload, format='json')
+
+    self.assertEqual(res.status_code, status.HTTP_200_OK)
+    new_tag = Tag.objects.get(name = 'tag0', user = self.user)
+    self.assertIn(new_tag, smartphone.tags.all())
+
+  def test_update_smartphone_assign_tag(self):
+    """Test assigning an existing tag when updating a smartphone"""
+    tag_iphone = Tag.objects.create(user=self.user, name='tag_iphone')
+    smartphone = create_smartphone(user=self.user)
+    smartphone.tags.add(tag_iphone)
+
+    tag_android = Tag.objects.create(user=self.user, name='tag_android')
+    payload = { 'tags' : [{'name': 'tag_android'}] }
+    url = detail_url(smartphone.id)
+    res = self.client.patch(url, payload, format='json')
+
+    self.assertEqual(res.status_code, status.HTTP_200_OK)
+    self.assertIn(tag_android, smartphone.tags.all())
+    self.assertNotIn(tag_iphone, smartphone.tags.all())
+
+  def test_clear_smartphone_tags(self):
+    """Test clearing tags when updating a smartphone"""
+    tag_iphone = Tag.objects.create(user=self.user, name='tag_iphone2')
+    smartphone = create_smartphone(user=self.user)
+    smartphone.tags.add(tag_iphone)
+
+    payload = { 'tags' : [] }
+    url = detail_url(smartphone.id)
+    res = self.client.patch(url, payload, format='json')
+
+    self.assertEqual(res.status_code, status.HTTP_200_OK)
+    self.assertEqual(smartphone.tags.count(), 0)
