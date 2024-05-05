@@ -63,4 +63,13 @@ class SmartphoneDetailSerializer(SmartphoneSerializer):
     """Serializer for smartphone detail view."""
 
     class Meta(SmartphoneSerializer.Meta):
-        feilds = SmartphoneSerializer.Meta.fields + ('description',)
+        fields = SmartphoneSerializer.Meta.fields + ('description','image', )
+
+class SmartphoneImageSerializer(serializers.ModelSerializer):
+    """Serializer for uploading images to smartphones"""
+
+    class Meta:
+        model = Smartphone
+        fields = ('id', 'image', )
+        read_only_fields = ('id',)
+        extra_kwargs = {'image': {'required': True}}

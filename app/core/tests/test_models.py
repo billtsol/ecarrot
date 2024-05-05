@@ -1,6 +1,8 @@
 """
 Tests for models
 """
+
+from unittest.mock import patch
 from decimal import Decimal
 from core import models
 
@@ -83,3 +85,13 @@ class ModelTests(TestCase):
     )
 
     self.assertEqual(str(tag), tag.name)
+
+  @patch('core.models.uuid.uuid4')
+  def test_smartphone_file_name_uuid(self, mock_uuid):
+    """Test generating image path."""
+    uuid = 'test-uuid'
+    mock_uuid.return_value = uuid
+    file_path = models.smartphone_image_file_path(None, 'example.jpg')
+
+    exp_path = f'uploads/smartphone/{uuid}.jpg'
+    self.assertEqual(file_path, exp_path)

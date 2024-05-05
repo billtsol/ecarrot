@@ -8,6 +8,8 @@ from drf_spectacular.views import ( # type: ignore
 
 from django.contrib import admin
 from django.urls import path, include
+from django.conf.urls.static import static
+from django.conf import settings
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -21,3 +23,9 @@ urlpatterns = [
 
     path('api/smartphones/', include('smartphone.urls')),
 ]
+
+if settings.DEBUG:
+  urlpatterns += static(
+    settings.MEDIA_URL,
+    document_root = settings.MEDIA_ROOT
+  )

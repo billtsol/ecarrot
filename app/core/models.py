@@ -1,6 +1,9 @@
 """
 Database for models
 """
+import uuid
+import os
+
 from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import (
@@ -8,6 +11,13 @@ from django.contrib.auth.models import (
   BaseUserManager,
   PermissionsMixin,
 )
+
+def smartphone_image_file_path(instance, filename):
+  """Generate file path for new smartphone image."""
+  ext = os.path.splitext(filename)[1]
+  filename = f'{uuid.uuid4()}{ext}'
+
+  return os.path.join('uploads', 'smartphone', filename)
 
 class UserManager(BaseUserManager):
   """Manager for user in the system"""
@@ -58,7 +68,10 @@ class Smartphone(models.Model):
   name = models.CharField(max_length=255)
   price = models.DecimalField(max_digits=5, decimal_places=2)
   description = models.TextField(blank=True)
-
+  image = models.ImageField(
+    null=True,
+    upload_to=smartphone_image_file_path
+  )
   tags = models.ManyToManyField('Tag')
 
   def __str__(self):
