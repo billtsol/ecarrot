@@ -376,6 +376,30 @@ class PrivateSmartphoneApiTests(TestCase):
 
     self.assertEqual(res.status_code, status.HTTP_201_CREATED)
 
+  def test_filter_by_tags(self):
+    """Test filtering smartphones by tags"""
+
+    smartphone1 = create_smartphone( user = self.user, name = 'Iphone 1')
+    smartphone2 = create_smartphone( user = self.user, name = 'Iphone 2')
+
+    tag1 = Tag.objects.create(user=self.user, name='tag1')
+    tag2 = Tag.objects.create(user=self.user, name='tag2')
+
+    smartphone1.tags.add(tag1)
+    smartphone2.tags.add(tag2)
+
+    smartphone3 = create_smartphone(user=self.user, name='Iphone 3')
+
+    params = { 'tags': f'{tag1.id},{tag2.id}' }
+    res = self.client.get(SMARTPHONE_URLS, params)
+
+    s1 = SmartphoneSerializer(smartphone1)
+    s2 = SmartphoneSerializer(smartphone2)
+    s3 = SmartphoneSerializer(smartphone3)
+    
+    self.assertIn(s1.data, res.data)
+    self.assertIn(s2.data, res.data)
+    self.assertNotIn(s3.data, res.data)
 
 """
 class ImageUploadTests(TestCase):
