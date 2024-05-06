@@ -12,10 +12,12 @@ from rest_framework.response import Response # type: ignore
 from rest_framework.decorators import action # type: ignore
 from rest_framework.authentication import TokenAuthentication # type: ignore
 from rest_framework.permissions import IsAuthenticated # type: ignore
+from rest_framework import generics # type: ignore
 
 from core.models import (
   Smartphone,
-  Tag
+  Tag,
+  SmartphoneImage
 )
 from smartphone import serializers
 
@@ -58,6 +60,7 @@ class SmartphoneViewSet(viewsets.ModelViewSet):
     return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
 
 class TagViewSet(
+  mixins.CreateModelMixin,
   mixins.DestroyModelMixin,
   mixins.UpdateModelMixin,
   mixins.ListModelMixin,
@@ -73,3 +76,29 @@ class TagViewSet(
   def get_queryset(self):
     """Retrieve tags for the authenticated user"""
     return self.queryset.filter(user = self.request.user).order_by('-name')
+  
+  def perform_create(self, serializer):
+    """Create a new smartphone image"""
+    serializer.save(user=self.request.user)
+
+class SmartphoneImageViewSet(
+  mixins.CreateModelMixin,
+  mixins.DestroyModelMixin,
+  mixins.UpdateModelMixin,
+  mixins.ListModelMixin,
+  viewsets.GenericViewSet
+):
+  """Manage Smartphone images in the database"""
+
+  serializer_class = serializers.SmartphoneImageSerializer
+  queryset = SmartphoneImage.objects.all()
+  authentication_classes = (TokenAuthentication,)
+  permission_classes = (IsAuthenticated,)
+
+  def get_queryset(self):
+    """Retrieve tags for the authenticated user"""
+    return self.queryset.filter(user = self.request.user).order_by('-id')
+
+  def perform_create(self, serializer):
+    """Create a new smartphone image"""
+    serializer.save(user=self.request.user)

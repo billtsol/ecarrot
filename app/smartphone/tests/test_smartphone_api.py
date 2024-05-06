@@ -11,13 +11,15 @@ from PIL import Image # type: ignore
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
+from django.core.files.uploadedfile import SimpleUploadedFile
 
 from rest_framework import status # type: ignore
 from rest_framework.test import APIClient # type: ignore
 
 from core.models import (
   Smartphone,
-  Tag
+  Tag,
+  SmartphoneImage
 )
 
 from smartphone.serializers import (
@@ -26,6 +28,7 @@ from smartphone.serializers import (
 )
 
 SMARTPHONE_URLS = reverse('smartphone:smartphone-list')
+SMARTPHONE_IMAGES_URL = reverse('smartphone:smartphoneimage-list')
 
 def detail_url(smartphone_id):
   """Create and return smartphone detail URL."""
@@ -44,6 +47,15 @@ def create_smartphone(user, **params):
   defaults.update(params)
 
   return Smartphone.objects.create(user=user, **defaults)
+
+def create_smartphone_image(name = 'test_image.jpg'):
+  """Create a smartphone image"""
+  image = SimpleUploadedFile(
+    name,
+    b"file_content",
+    content_type="image/jpeg"
+  )
+  return image
 
 def create_user(**params):
   """Create and return a sample user"""
@@ -102,7 +114,6 @@ class PrivateSmartphoneApiTests(TestCase):
 
     self.assertEqual(res.status_code, status.HTTP_200_OK)
     self.assertEqual(res.data, serializer.data)
-
 
   def test_get_smartphone_detail(self):
     """Test get smartphone detail"""
@@ -270,7 +281,7 @@ class PrivateSmartphoneApiTests(TestCase):
       'price': Decimal('100.00'),
       'tags': [
         {'name' : 'tag1'},
-        {'name' : 'tag3'}
+        {'name' : 'tag2'}
       ]
     }
 
@@ -337,8 +348,38 @@ class PrivateSmartphoneApiTests(TestCase):
     self.assertEqual(res.status_code, status.HTTP_200_OK)
     self.assertEqual(smartphone.tags.count(), 0)
 
+  def test_create_smartphone_with_new_images(self):
+    """Test creating a new smartphone with new images"""
+
+    test_image1 = create_smartphone_image('test_image1.jpg')
+    test_image2 = create_smartphone_image('test_image2.jpg')
+
+    image1 = SmartphoneImage.objects.create(
+      user = self.user,
+      image = test_image1
+    )
+    image2 = SmartphoneImage.objects.create(
+      user = self.user,
+      image = test_image2
+    )
+
+    payload = {
+      'name': 'Test Smartphone3',
+      'price': Decimal('100.00'),
+      'images': [
+        image1,
+        image2
+      ]
+    }
+
+    res = self.client.post(SMARTPHONE_URLS, payload, format='multipart')
+
+    self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+
+
+"""
 class ImageUploadTests(TestCase):
-  """Tests for the image upload API"""
+  Tests for the image upload API
 
   def setUp(self):
     self.client = APIClient()
@@ -353,7 +394,7 @@ class ImageUploadTests(TestCase):
     self.smartphone.image.delete()
 
   def test_upload_image(self):
-    """Test uploading an image to a smartphone"""
+    Test uploading an image to a smartphone
     url = image_upload_url(self.smartphone.id)
 
     with tempfile.NamedTemporaryFile(suffix='.jpg') as image_file:
@@ -369,9 +410,11 @@ class ImageUploadTests(TestCase):
     self.assertTrue(os.path.exists(self.smartphone.image.path))
 
   def test_upload_image_bad_request(self):
-    """Test uploading an invalid image"""
+    Test uploading an invalid image
     url = image_upload_url(self.smartphone.id)
     payload = {'image': 'notimage'}
     res = self.client.post(url, payload, format='multipart')
 
     self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+"""

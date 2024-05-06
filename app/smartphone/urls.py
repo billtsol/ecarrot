@@ -13,6 +13,7 @@ from smartphone import views
 router = DefaultRouter()
 router.register('smartphone', views.SmartphoneViewSet)
 router.register('tags', views.TagViewSet)
+router.register('smartphoneimage', views.SmartphoneImageViewSet)
 
 app_name = 'smartphone'
 

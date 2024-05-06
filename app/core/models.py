@@ -68,11 +68,9 @@ class Smartphone(models.Model):
   name = models.CharField(max_length=255)
   price = models.DecimalField(max_digits=5, decimal_places=2)
   description = models.TextField(blank=True)
-  image = models.ImageField(
-    null=True,
-    upload_to=smartphone_image_file_path
-  )
   tags = models.ManyToManyField('Tag')
+
+  images = models.ManyToManyField('SmartphoneImage')
 
   def __str__(self):
     return self.name
@@ -87,3 +85,15 @@ class Tag(models.Model):
 
   def __str__(self):
     return self.name
+
+class SmartphoneImage(models.Model):
+  """Smartphone image object."""
+  user = models.ForeignKey(
+    settings.AUTH_USER_MODEL,
+    on_delete = models.CASCADE,
+  )
+
+  image = models.ImageField(upload_to = smartphone_image_file_path)
+
+  def __str__(self):
+    return str(self.user.id)

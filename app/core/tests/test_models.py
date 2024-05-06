@@ -5,12 +5,17 @@ Tests for models
 from unittest.mock import patch
 from decimal import Decimal
 from core import models
+import tempfile
+import os
+
+from PIL import Image # type: ignore
 
 from django.test import TestCase
 from django.contrib.auth import get_user_model
+from django.core.files.uploadedfile import SimpleUploadedFile
 
 def create_user(email = 'test2@example.com', password = 'test123456'):
-  """Create a user"""
+  """Create and return a user"""
   return get_user_model().objects.create_user(
     email = email,
     password = password
@@ -85,6 +90,23 @@ class ModelTests(TestCase):
     )
 
     self.assertEqual(str(tag), tag.name)
+
+  def test_create_image(self):
+    """Test creating an image is successful"""
+
+    image = SimpleUploadedFile(
+      "test_image.jpg",
+      b"file_content",
+      content_type="image/jpeg"
+    )
+
+    smartphone_image = models.SmartphoneImage.objects.create(
+        user = create_user(),
+        image = image
+    )
+
+    self.assertIsNotNone(smartphone_image)
+    self.assertTrue(os.path.exists(smartphone_image.image.path))
 
   @patch('core.models.uuid.uuid4')
   def test_smartphone_file_name_uuid(self, mock_uuid):
