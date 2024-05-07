@@ -1,6 +1,8 @@
 """
 Views for smartphone APIs
 """
+import json
+
 from drf_spectacular.utils import ( # type: ignore
   extend_schema_view,
   extend_schema,
@@ -83,9 +85,15 @@ class SmartphoneViewSet(viewsets.ModelViewSet):
     smartphone = self.get_object()
     serializer = self.get_serializer(smartphone, data = request.data)
 
+    payload = {
+      'user' : self.request.user,
+      'image': request.data['image'],
+    }
+
     if serializer.is_valid():
-      serializer.save()
-      return Response(serializer.data, status=status.HTTP_200_OK)
+      image = serializer._create_image(payload, smartphone)
+      serializer_data = serializers.SmartphoneImageSerializer(image)
+      return Response(serializer_data.data, status=status.HTTP_200_OK)
 
     return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
 

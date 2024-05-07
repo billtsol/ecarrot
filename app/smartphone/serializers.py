@@ -26,6 +26,14 @@ class SmartphoneImageSerializer(serializers.ModelSerializer):
         read_only_fields = ('id',)
         extra_kwargs = {'image': {'required': True}}
 
+    def _create_image(self, validated_data, smartphone):
+        """Create a new SmartphoneImage"""
+
+        image = SmartphoneImage.objects.create(**validated_data)
+        smartphone.images.add(image)
+
+        return image
+
 class SmartphoneSerializer(serializers.ModelSerializer):
     """Serializer for smartphone objects"""
 

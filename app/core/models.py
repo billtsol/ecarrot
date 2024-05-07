@@ -96,4 +96,4 @@ class SmartphoneImage(models.Model):
   image = models.ImageField(upload_to = smartphone_image_file_path)
 
   def __str__(self):
-    return str(self.user.id)
+    return str(self.id)
