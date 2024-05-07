@@ -3,6 +3,7 @@ Database for models
 """
 import uuid
 import os
+from django.db.models.functions import Now
 
 from django.conf import settings
 from django.db import models
@@ -17,7 +18,14 @@ def smartphone_image_file_path(instance, filename):
   ext = os.path.splitext(filename)[1]
   filename = f'{uuid.uuid4()}{ext}'
 
-  return os.path.join('uploads', 'smartphone', filename)
+  return os.path.join('uploads', 'smartphone', 'image', filename)
+
+def smartphone_video_file_path(instance, filename):
+  """Generate file path for new smartphone video."""
+  ext = os.path.splitext(filename)[1]
+  filename = f'{uuid.uuid4()}{ext}'
+
+  return os.path.join('uploads', 'smartphone', 'video', filename)
 
 class UserManager(BaseUserManager):
   """Manager for user in the system"""
@@ -29,6 +37,7 @@ class UserManager(BaseUserManager):
 
     user = self.model(
       email=self.normalize_email(email),
+      user_name = email.split('@')[0],
       **extra_fields
     )
     user.set_password(password)
@@ -49,6 +58,7 @@ class User(AbstractBaseUser, PermissionsMixin):
   """User in the system"""
   email = models.EmailField(max_length=255, unique=True)
   name = models.CharField(max_length=255)
+  user_name = models.CharField(max_length=255, unique=True, blank=True, default='')
 
   is_active = models.BooleanField(default=True)
   is_staff = models.BooleanField(default=False)
@@ -70,7 +80,9 @@ class Smartphone(models.Model):
   description = models.TextField(blank=True)
   tags = models.ManyToManyField('Tag')
 
-  images = models.ManyToManyField('SmartphoneImage')
+  images = models.ManyToManyField('SmartphoneImage', blank=True)
+  video  = models.FileField(upload_to = smartphone_video_file_path, blank=True)
+  created_at = models.DateTimeField(db_default=Now())
 
   def __str__(self):
     return self.name
@@ -82,6 +94,7 @@ class Tag(models.Model):
     settings.AUTH_USER_MODEL,
     on_delete = models.CASCADE,
   )
+  created_at = models.DateTimeField(db_default=Now())
 
   def __str__(self):
     return self.name
@@ -94,6 +107,7 @@ class SmartphoneImage(models.Model):
   )
 
   image = models.ImageField(upload_to = smartphone_image_file_path)
+  created_at = models.DateTimeField(db_default=Now())
 
   def __str__(self):
     return str(self.id)

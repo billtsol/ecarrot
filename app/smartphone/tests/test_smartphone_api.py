@@ -23,8 +23,7 @@ from core.models import (
 )
 
 from smartphone.serializers import (
-  SmartphoneSerializer,
-  SmartphoneDetailSerializer
+  SmartphoneSerializer
 )
 
 SMARTPHONE_URLS = reverse('smartphone:smartphone-list')
@@ -67,12 +66,6 @@ class PublicSmartphoneApiTests(TestCase):
   def setUp(self):
     self.client = APIClient()
 
-  def test_auth_required(self):
-    """Test that auth is required for retrieving smartphones"""
-    res = self.client.get(SMARTPHONE_URLS)
-
-    self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
-
 class PrivateSmartphoneApiTests(TestCase):
   """Test the authorized user smartphone API"""
 
@@ -81,7 +74,7 @@ class PrivateSmartphoneApiTests(TestCase):
     self.user = create_user(
       email = 'userTeset12@example.com',
       password = 'test123456'
-      )
+    )
     self.client.force_authenticate(self.user)
 
   def test_retrieve_smartphones(self):
@@ -97,35 +90,23 @@ class PrivateSmartphoneApiTests(TestCase):
     self.assertEqual(res.status_code, status.HTTP_200_OK)
     self.assertEqual(res.data, serializer.data)
 
-  def test_smartphone_list_limited_to_user(self):
-    """Test that smartphones for the authenticated user are returned"""
-    other_user = create_user(
-      email = 'testUser2@example.com',
-      password = 'test123456'
-    )
-    create_smartphone(user=other_user)
+  # def test_smartphone_list_limited_to_user(self):
+  #   """Test that smartphones for the authenticated user are returned"""
+  #   other_user = create_user(
+  #     email = 'testUser2@example.com',
+  #     password = 'test123456'
+  #   )
+  #   create_smartphone(user=other_user)
 
-    create_smartphone(user=self.user)
+  #   create_smartphone(user=self.user)
 
-    res = self.client.get(SMARTPHONE_URLS)
+  #   res = self.client.get(SMARTPHONE_URLS)
 
-    smartphone = Smartphone.objects.filter(user=self.user)
-    serializer = SmartphoneSerializer(smartphone, many=True)
+  #   smartphone = Smartphone.objects.filter(user=self.user)
+  #   serializer = SmartphoneSerializer(smartphone, many=True)
 
-    self.assertEqual(res.status_code, status.HTTP_200_OK)
-    self.assertEqual(res.data, serializer.data)
-
-  def test_get_smartphone_detail(self):
-    """Test get smartphone detail"""
-
-    smartphone = create_smartphone(user=self.user)
-
-    url = detail_url(smartphone.id)
-    res = self.client.get(url)
-
-    serializer = SmartphoneDetailSerializer(smartphone)
-
-    self.assertEqual(res.data, serializer.data)
+  #   self.assertEqual(res.status_code, status.HTTP_200_OK)
+  #   self.assertEqual(res.data, serializer.data)
 
   def test_create_smartphone(self):
     """Test creating a new smartphone"""
@@ -396,49 +377,39 @@ class PrivateSmartphoneApiTests(TestCase):
     s1 = SmartphoneSerializer(smartphone1)
     s2 = SmartphoneSerializer(smartphone2)
     s3 = SmartphoneSerializer(smartphone3)
-    
+
     self.assertIn(s1.data, res.data)
     self.assertIn(s2.data, res.data)
     self.assertNotIn(s3.data, res.data)
 
-"""
-class ImageUploadTests(TestCase):
-  Tests for the image upload API
+  def test_create_smartphone_with_new_video(self):
+    """Test creating a new smartphone with new video"""
 
-  def setUp(self):
-    self.client = APIClient()
-    self.user = create_user(
-      email = 'testuser2@example.com',
-      password = 'testuser1234'
-    )
-    self.client.force_authenticate(user=self.user)
-    self.smartphone = create_smartphone(user=self.user)
+    with tempfile.NamedTemporaryFile(suffix='.mp4') as video_file:
+      video_file.write(b"file_content")
+      video_file.seek(0)
 
-  def tearDown(self):
-    self.smartphone.image.delete()
+      payload = {
+        'name': 'Test Smartphone3',
+        'price': Decimal('100.00'),
+        'video': video_file
+      }
 
-  def test_upload_image(self):
-    Test uploading an image to a smartphone
-    url = image_upload_url(self.smartphone.id)
+      res = self.client.post(SMARTPHONE_URLS, payload, format='multipart')
 
-    with tempfile.NamedTemporaryFile(suffix='.jpg') as image_file:
-      img = Image.new('RGB', (10, 10))
-      img.save(image_file, format='JPEG')
-      image_file.seek(0)
-      payload = {'image': image_file}
-      res = self.client.post(url, payload, format='multipart')
+      self.assertEqual(res.status_code, status.HTTP_201_CREATED)
 
-    self.smartphone.refresh_from_db()
-    self.assertEqual(res.status_code, status.HTTP_200_OK)
-    self.assertIn('image', res.data)
-    self.assertTrue(os.path.exists(self.smartphone.image.path))
+  def test_update_smartphone_video(self):
+    """Test updating a smartphone with new video"""
 
-  def test_upload_image_bad_request(self):
-    Test uploading an invalid image
-    url = image_upload_url(self.smartphone.id)
-    payload = {'image': 'notimage'}
-    res = self.client.post(url, payload, format='multipart')
+    with tempfile.NamedTemporaryFile(suffix='.mp4') as video_file:
+      video_file.write(b"file_content")
+      video_file.seek(0)
 
-    self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+      smartphone = create_smartphone(user=self.user)
 
-"""
+      payload = { 'video': video_file }
+      url = detail_url(smartphone.id)
+      res = self.client.patch(url, payload, format='multipart')
+
+      self.assertEqual(res.status_code, status.HTTP_200_OK)

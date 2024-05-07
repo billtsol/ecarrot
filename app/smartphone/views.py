@@ -18,7 +18,6 @@ from rest_framework import ( # type: ignore
 from rest_framework.response import Response # type: ignore
 from rest_framework.decorators import action # type: ignore
 from rest_framework.authentication import TokenAuthentication # type: ignore
-from rest_framework.permissions import IsAuthenticated # type: ignore
 from rest_framework import generics # type: ignore
 
 from core.models import (
@@ -27,6 +26,26 @@ from core.models import (
   SmartphoneImage
 )
 from smartphone import serializers
+
+from rest_framework.permissions import BasePermission, IsAuthenticated, AllowAny # type: ignore
+
+class CustomPermission(BasePermission):
+  """
+  Custom permission class to allow access based on the method.
+  """
+  edit_methods = ('GET')
+
+  def has_permission(self, request, view):
+    """
+    Return `True` if permission is granted, `False` otherwise.
+    """
+    if request.user.is_authenticated:
+      return True
+
+    if request.method in self.edit_methods:
+      return True
+
+    return False
 
 @extend_schema_view(
   list = extend_schema(
@@ -42,10 +61,10 @@ from smartphone import serializers
 class SmartphoneViewSet(viewsets.ModelViewSet):
   """Manage smartphones in the database"""
 
-  serializer_class = serializers.SmartphoneDetailSerializer
+  serializer_class = serializers.SmartphoneSerializer
   queryset = Smartphone.objects.all()
   authentication_classes = (TokenAuthentication,)
-  permission_classes = (IsAuthenticated,)
+  permission_classes = [CustomPermission]
 
   def _params_to_ints(self, qs):
     """Convert a list of string IDs to a list of integers"""
@@ -61,9 +80,10 @@ class SmartphoneViewSet(viewsets.ModelViewSet):
       tag_ids = self._params_to_ints(tags)
       queryset = queryset.filter(tags__id__in = tag_ids)
 
-    return queryset.filter(
-      user = self.request.user
-    ).order_by('-id').distinct()
+    if self.request.method == 'DELETE':
+      return queryset.filter(user = self.request.user).order_by('-id')
+
+    return queryset.all().order_by('-id').distinct()
 
   def get_serializer_class(self):
     """Return the serializer class for request"""
@@ -109,11 +129,13 @@ class TagViewSet(
   serializer_class = serializers.TagSerializer
   queryset = Tag.objects.all()
   authentication_classes = (TokenAuthentication,)
-  permission_classes = (IsAuthenticated,)
+  permission_classes = [CustomPermission]
 
   def get_queryset(self):
-    """Retrieve tags for the authenticated user"""
-    return self.queryset.filter(user = self.request.user).order_by('-name')
+    """Retrieve all tags"""
+    queryset = self.queryset.all()
+
+    return queryset.order_by('-name')
 
   def perform_create(self, serializer):
     """Create a new smartphone image"""
@@ -131,11 +153,11 @@ class SmartphoneImageViewSet(
   serializer_class = serializers.SmartphoneImageSerializer
   queryset = SmartphoneImage.objects.all()
   authentication_classes = (TokenAuthentication,)
-  permission_classes = (IsAuthenticated,)
+  permission_classes = [CustomPermission]
 
   def get_queryset(self):
     """Retrieve tags for the authenticated user"""
-    return self.queryset.filter(user = self.request.user).order_by('-id')
+    return self.queryset.all().order_by('-id')
 
   def perform_create(self, serializer):
     """Create a new smartphone image"""

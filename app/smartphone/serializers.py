@@ -42,7 +42,7 @@ class SmartphoneSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Smartphone
-        fields = ('id', 'name', 'price','tags', 'images', )
+        fields = ('id', 'name', 'price','tags', 'description', 'images', 'video', )
         read_only_fields = ('id',)
 
     def _get_or_create_tags(self, tags, instance):
@@ -101,9 +101,3 @@ class SmartphoneSerializer(serializers.ModelSerializer):
 
         instance.save()
         return instance
-
-class SmartphoneDetailSerializer(SmartphoneSerializer):
-    """Serializer for smartphone detail view."""
-
-    class Meta(SmartphoneSerializer.Meta):
-        fields = SmartphoneSerializer.Meta.fields + ('description', 'images')

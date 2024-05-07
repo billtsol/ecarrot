@@ -48,6 +48,52 @@ class UserAdmin(BaseUserAdmin):
   )
 
 admin.site.register(models.User, UserAdmin)
-admin.site.register(models.Smartphone)
-admin.site.register(models.Tag)
-admin.site.register(models.SmartphoneImage)
+
+class SmartphoneAdmin(admin.ModelAdmin):
+  """Define the admin pages for smartphones."""
+
+  ordering = ['-id']
+  search_fields = ('name', 'tags',  'user', )
+  list_display = ['name', 'price', 'user']
+
+  fieldsets = (
+    (None, {'fields' : ('name', 'price', 'description', 'video', 'images', 'tags', )}),
+  )
+  def save_model(self, request, obj, form, change):
+    if getattr(obj, 'user', None) is None:
+        obj.user = request.user
+    obj.save()
+
+admin.site.register(models.Smartphone, SmartphoneAdmin)
+
+class TagAdmin(admin.ModelAdmin):
+  """ Define the admin pages for tags."""
+  ordering = ['id']
+  search_fields = ('name', )
+  list_display = ['name', 'user']
+
+  fieldsets = (
+    (None, {'fields' : ('name', )}),
+  )
+  def save_model(self, request, obj, form, change):
+    if getattr(obj, 'user', None) is None:
+        obj.user = request.user
+    obj.save()
+
+admin.site.register(models.Tag, TagAdmin)
+
+class SmartphoneImageAdmin(admin.ModelAdmin):
+  """ Define the admin pages for smartphone images."""
+  ordering = ['-id']
+  search_fields = ('user', )
+  list_display = ['id', 'user']
+
+  fieldsets = (
+    (None, {'fields' : ( 'image', )}),
+  )
+  def save_model(self, request, obj, form, change):
+    if getattr(obj, 'user', None) is None:
+        obj.user = request.user
+    obj.save()
+
+admin.site.register(models.SmartphoneImage, SmartphoneImageAdmin)
