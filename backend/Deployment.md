@@ -33,7 +33,7 @@ sudo yum install git -y
 Install Docker, make it auto start and give `ec2-user` permissions to use it:
 
 ```sh
-sudo amazon-linux-extras install docker -y
+sudo yum install -y docker
 sudo systemctl enable docker.service
 sudo systemctl start docker.service
 sudo usermod -aG docker ec2-user

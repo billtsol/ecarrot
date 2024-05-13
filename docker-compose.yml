@@ -1,14 +1,13 @@
-
 services:
-  app:
+  backend:
     build:
-      context: .
+      context: ./backend
       args:
         - DEV=true
     ports:
       - '8000:8000'
     volumes:
-      - ./app:/app
+      - ./backend/api:/backend/api
       - dev-static-data:/vol/web
     command: >
       sh -c "python manage.py wait_for_db &&
