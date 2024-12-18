@@ -1,40 +1,45 @@
-
 services:
+  # Backend service definition
   backend:
     build:
-      context: ./backend
-    restart: always
+      context: ./backend  # Path to the backend directory for the build context
+    restart: always  # Always restart the backend service if it stops
     volumes:
-      - static-data:/vol/web
+      - static-data:/vol/web  # Mount the static-data volume to the /vol/web directory inside the container
     environment:
-      - DB_HOST=db
-      - DB_NAME=${DB_NAME}
-      - DB_USER=${DB_USER}
-      - DB_PASS=${DB_PASS}
-      - SECRET_KEY=${DJANGO_SECRET_KEY}
-      - ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS}
+      - DB_HOST=db  # The database hostname to connect to, using the db service
+      - DB_NAME=${DB_NAME}  # The name of the database (from environment variable)
+      - DB_USER=${DB_USER}  # The database user (from environment variable)
+      - DB_PASS=${DB_PASS}  # The database password (from environment variable)
+      - SECRET_KEY=${DJANGO_SECRET_KEY}  # Django secret key (from environment variable)
+      - ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS}  # Django allowed hosts (from environment variable)
     depends_on:
-      - db
+      - db  # Ensure that the backend service starts only after the db service is up
+
+  # Database service definition using Postgres image
   db:
-    image: postgres:16-alpine
-    restart: always
+    image: postgres:16-alpine  # Use the official Postgres 16 Alpine image
+    restart: always  # Always restart the database service if it stops
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/data  # Mount the postgres-data volume to store data persistently
     environment:
-      - POSTGRES_DB=${DB_NAME}
-      - POSTGRES_USER=${DB_USER}
-      - POSTGRES_PASSWORD=${DB_PASS}
+      - POSTGRES_DB=${DB_NAME}  # The database name to be created in Postgres
+      - POSTGRES_USER=${DB_USER}  # The Postgres username (from environment variable)
+      - POSTGRES_PASSWORD=${DB_PASS}  # The Postgres password (from environment variable)
+
+  # Proxy service definition
   proxy:
     build:
-      context: ./proxy
-    restart: always
+      context: ./proxy  # Path to the proxy directory for the build context
+    restart: always  # Always restart the proxy service if it stops
     depends_on:
-      - backend
+      - backend  # Ensure that the proxy service starts only after the backend service is up
     ports:
-      - '80:8000'
+      - '80:8000'  # Map port 8000 inside the container to port 80 on the host
     volumes:
-      - static-data:/vol/static
+      - static-data:/vol/static  # Mount the static-data volume to the /vol/static directory inside the container
 
+# Definition of named volumes for persistent data storage
 volumes:
-  postgres-data:
-  static-data:
+  postgres-data:  # Volume for storing Postgres data
+  static-data:   # Volume for storing static files used by the backend and proxy
